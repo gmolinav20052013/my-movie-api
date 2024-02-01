@@ -4,10 +4,14 @@ from pydantic import BaseModel, Field
 from typing import Any, Optional, List
 from jwt_manager import create_token, validate_token
 from fastapi.security import HTTPBearer
+from config.database import Session, engine, Base
+from models.movie import Movie as MovieModel
 
 app = FastAPI()
 app.title = "Mis APIS FastAPI"
-app.version = "0.9.0"
+app.version = "0.0.1"
+
+Base.metadata.create_all(bind=engine)
 
 class JWTBearer(HTTPBearer):
     async def __call__(self, request: Request):
