@@ -9,11 +9,23 @@ app.version = "0.9.0"
 
 class Movie(BaseModel):
     id: Optional[int] = None
-    title: str = Field(max_length=15)
-    overview: str
-    year: str
-    rating: float
-    categoria: str
+    title: str = Field(min_length=5,max_length=15)
+    overview: str = Field(min_length=15,max_length=50)
+    year: int = Field(default=2024, le=2024)
+    rating: float = Field(default=0,le=10)
+    categoria: str = Field(min_length=3,max_length=25)
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "title": "Mi pelicula",
+                "overview": "Descripción de la movie",
+                "year": 2024,
+                "rating": 0.0,
+                "categoria": "Acción"
+            }
+        }
 
 movies = [
     {
