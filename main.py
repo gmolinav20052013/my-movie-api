@@ -96,7 +96,14 @@ def add_movies(movie: Movie) -> dict:
     # movies.append(
     #     {"id": id, "title": title, "overview": overview, "year": year, "rating": rating, "categoria": categoria}
     # )
-    movies.append(movie.model_dump())
+    
+    db = Session()
+    new_movie = MovieModel(**movie.__dict__)
+    db.add(new_movie)
+    db.commit()
+    
+    
+    # movies.append(movie.model_dump())
     return JSONResponse(content={"message" : "Película adicionada"})
 
 @app.put('/movies/{id}',tags=['CRUD'], status_code=200)
