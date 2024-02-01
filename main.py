@@ -1,7 +1,7 @@
 from fastapi import FastAPI,Body,Path, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
 app = FastAPI()
 app.title = "Mis APIS FastAPI"
@@ -50,28 +50,28 @@ movies = [
 
 @app.get('/',tags=['home'])
 def message():
-    return HTMLResponse('<h1>Hello world</h1>')
+    return HTMLResponse('<h1>Hello world Movies</h1>')
 
-@app.get('/movies', tags=['movies'])
+@app.get('/movies', tags=['movies'], response_model=List[Movie])
 def get_movies():
-    return movies
+    return JSONResponse(content=movies)
 
 @app.get('/movies/{id}', tags=['movies'])
 def get_movies(id: int = Path(ge=1,le=2000)):
-    return list(filter(lambda x: x['id'] == id, movies))
+    return JSONResponse(content=list(filter(lambda x: x['id'] == id, movies)))
 
 @app.get('/movies/', tags=['movies'])
 def get_movies_by_category(category: str = Query(min_length=5, max_length=25)):
-    return list(filter(lambda x: x['categoria'] == category, movies))
+    return JSONResponse(content=list(filter(lambda x: x['categoria'] == category, movies)))
 
-@app.post('/movies_add',tags=['CRUD'])
+@app.post('/movies_add',tags=['CRUD'],response_model=dict)
 # def add_movies(id: int = Body(), title: str = Body(), overview: str = Body(), year: str = Body(), rating: int = Body(), categoria: str = Body()):
-def add_movies(movie: Movie):
+def add_movies(movie: Movie) -> dict:
     # movies.append(
     #     {"id": id, "title": title, "overview": overview, "year": year, "rating": rating, "categoria": categoria}
     # )
-    movies.append(movie)
-    return movies
+    movies.append(movie.model_dump())
+    return JSONResponse(content={"message" : "Película adicionada"})
 
 @app.put('/movies/{id}',tags=['CRUD'])
 def actu_movies(id: int, movie: Movie):    
@@ -82,7 +82,9 @@ def actu_movies(id: int, movie: Movie):
             item["year"] = movie.year
             item["rating"] = movie.rating
             item["categoria"] = movie.categoria
-    return list(filter(lambda x: x['id'] == id, movies))
+            return JSONResponse(content={"message" : "Película modificada"})  
+    return   JSONResponse(content={"message" : "Película no encontrada"})          
+    # return JSONResponse(content=list(filter(lambda x: x['id'] == id, movies)))
 
 
 @app.delete('/movies/{id}', tags=['CRUD'])
@@ -90,7 +92,9 @@ def delete_movies_by_id(id: int):
     for item in movies:
         if item["id"] == id:
             movies.remove(item)
-    return movies
+            return JSONResponse(content={"message" : "Película eliminada"})  
+    return   JSONResponse(content={"message" : "Película no encontrada"})    
+    # return JSONResponse(content=movies)
 
 
 # @app.post('/movies_add',tags=['CRUD'])
