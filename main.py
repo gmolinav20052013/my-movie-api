@@ -1,9 +1,19 @@
 from fastapi import FastAPI,Body
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, Field
+from typing import Optional
 
 app = FastAPI()
 app.title = "Mis APIS FastAPI"
 app.version = "0.9.0"
+
+class Movie(BaseModel):
+    id: Optional[int] = None
+    title: str = Field(max_length=15)
+    overview: str
+    year: str
+    rating: float
+    categoria: str
 
 movies = [
     {
@@ -43,21 +53,23 @@ def get_movies_by_category(category: str):
     return list(filter(lambda x: x['categoria'] == category, movies))
 
 @app.post('/movies_add',tags=['CRUD'])
-def add_movies(id: int = Body(), title: str = Body(), overview: str = Body(), year: str = Body(), rating: int = Body(), categoria: str = Body()):
-    movies.append(
-        {"id": id, "title": title, "overview": overview, "year": year, "rating": rating, "categoria": categoria}
-    )
-    return title
+# def add_movies(id: int = Body(), title: str = Body(), overview: str = Body(), year: str = Body(), rating: int = Body(), categoria: str = Body()):
+def add_movies(movie: Movie):
+    # movies.append(
+    #     {"id": id, "title": title, "overview": overview, "year": year, "rating": rating, "categoria": categoria}
+    # )
+    movies.append(movie)
+    return movies
 
 @app.put('/movies/{id}',tags=['CRUD'])
-def actu_movies(id: int, title: str = Body(), overview: str = Body(), year: str = Body(), rating: int = Body(), categoria: str = Body()):    
+def actu_movies(id: int, movie: Movie):    
     for item in movies:
         if item["id"] == id:
-            item["title"] = title
-            item["overview"] = overview
-            item["year"] = year
-            item["rating"] = rating
-            item["categoria"] = categoria
+            item["title"] = movie.title
+            item["overview"] = movie.overview
+            item["year"] = movie.year
+            item["rating"] = movie.rating
+            item["categoria"] = movie.categoria
     return list(filter(lambda x: x['id'] == id, movies))
 
 
