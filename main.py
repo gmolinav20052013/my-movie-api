@@ -52,13 +52,16 @@ movies = [
 def message():
     return HTMLResponse('<h1>Hello world Movies</h1>')
 
-@app.get('/movies', tags=['movies'], response_model=List[Movie])
+@app.get('/movies', tags=['movies'], response_model=List[Movie], status_code=200)
 def get_movies():
-    return JSONResponse(content=movies)
+    return JSONResponse(status_code=200,content=movies)
 
 @app.get('/movies/{id}', tags=['movies'])
-def get_movies(id: int = Path(ge=1,le=2000)):
-    return JSONResponse(content=list(filter(lambda x: x['id'] == id, movies)))
+def get_movies(id: int = Path(ge=1,le=2000)):    
+    datamovies = list(filter(lambda x: x['id'] == id, movies))    
+    if len(datamovies) > 0:
+        return JSONResponse(status_code=200,content=datamovies)
+    return JSONResponse(status_code=404,content=[])
 
 @app.get('/movies/', tags=['movies'])
 def get_movies_by_category(category: str = Query(min_length=5, max_length=25)):
@@ -73,7 +76,7 @@ def add_movies(movie: Movie) -> dict:
     movies.append(movie.model_dump())
     return JSONResponse(content={"message" : "Película adicionada"})
 
-@app.put('/movies/{id}',tags=['CRUD'])
+@app.put('/movies/{id}',tags=['CRUD'], status_code=200)
 def actu_movies(id: int, movie: Movie):    
     for item in movies:
         if item["id"] == id:
@@ -82,18 +85,18 @@ def actu_movies(id: int, movie: Movie):
             item["year"] = movie.year
             item["rating"] = movie.rating
             item["categoria"] = movie.categoria
-            return JSONResponse(content={"message" : "Película modificada"})  
-    return   JSONResponse(content={"message" : "Película no encontrada"})          
+            return JSONResponse(status_code=200, content={"message" : "Película modificada"})  
+    return   JSONResponse(status_code=404,content={"message" : "Película no encontrada"})          
     # return JSONResponse(content=list(filter(lambda x: x['id'] == id, movies)))
 
 
-@app.delete('/movies/{id}', tags=['CRUD'])
+@app.delete('/movies/{id}', tags=['CRUD'],status_code=200)
 def delete_movies_by_id(id: int):
     for item in movies:
         if item["id"] == id:
             movies.remove(item)
-            return JSONResponse(content={"message" : "Película eliminada"})  
-    return   JSONResponse(content={"message" : "Película no encontrada"})    
+            return JSONResponse(status_code=200,content={"message" : "Película eliminada"})  
+    return   JSONResponse(status_code=404,content={"message" : "Película no encontrada"})    
     # return JSONResponse(content=movies)
 
 
