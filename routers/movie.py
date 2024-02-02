@@ -8,12 +8,7 @@ from models.movie import Movie as MovieModel
 from fastapi.encoders import jsonable_encoder
 from middlewares.jwt_bearer import JWTBearer
 
-
-
-
-
 movie_router = APIRouter()
-
 
 class Movie(BaseModel):
     id: Optional[int] = None
