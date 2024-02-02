@@ -6,6 +6,7 @@ from jwt_manager import create_token, validate_token
 from fastapi.security import HTTPBearer
 from config.database import Session, engine, Base
 from models.movie import Movie as MovieModel
+from fastapi.encoders import jsonable_encoder
 
 app = FastAPI()
 app.title = "Mis APIS FastAPI"
@@ -77,18 +78,27 @@ def login(user: User):
 
 @app.get('/movies', tags=['movies'], response_model=List[Movie], status_code=200, dependencies=[Depends(JWTBearer())])
 def get_movies():
-    return JSONResponse(status_code=200,content=movies)
+    db = Session()    
+    result = db.query(MovieModel).all()
+    return JSONResponse(status_code=200,content=jsonable_encoder(result))
 
 @app.get('/movies/{id}', tags=['movies'])
 def get_movies(id: int = Path(ge=1,le=2000)):    
-    datamovies = list(filter(lambda x: x['id'] == id, movies))    
-    if len(datamovies) > 0:
-        return JSONResponse(status_code=200,content=datamovies)
+    # datamovies = list(filter(lambda x: x['id'] == id, movies))    
+    db = Session()
+    result = db.query(MovieModel).filter(MovieModel.id == id).first()
+    if result:
+        return JSONResponse(status_code=200,content=jsonable_encoder(result))
     return JSONResponse(status_code=404,content=[])
 
 @app.get('/movies/', tags=['movies'])
 def get_movies_by_category(category: str = Query(min_length=5, max_length=25)):
-    return JSONResponse(content=list(filter(lambda x: x['categoria'] == category, movies)))
+    db = Session()
+    result = db.query(MovieModel).filter(MovieModel.categoria == category).all()
+    if result:
+        return JSONResponse(status_code=200,content=jsonable_encoder(result))
+    return JSONResponse(status_code=404,content=[])
+    # return JSONResponse(content=list(filter(lambda x: x['categoria'] == category, movies)))
 
 @app.post('/movies_add',tags=['CRUD'],response_model=dict)
 # def add_movies(id: int = Body(), title: str = Body(), overview: str = Body(), year: str = Body(), rating: int = Body(), categoria: str = Body()):
@@ -108,25 +118,44 @@ def add_movies(movie: Movie) -> dict:
 
 @app.put('/movies/{id}',tags=['CRUD'], status_code=200)
 def actu_movies(id: int, movie: Movie):    
-    for item in movies:
-        if item["id"] == id:
-            item["title"] = movie.title
-            item["overview"] = movie.overview
-            item["year"] = movie.year
-            item["rating"] = movie.rating
-            item["categoria"] = movie.categoria
-            return JSONResponse(status_code=200, content={"message" : "Película modificada"})  
-    return   JSONResponse(status_code=404,content={"message" : "Película no encontrada"})          
+    db = Session()
+    result = db.query(MovieModel).filter(MovieModel.id == id).first()
+    if not result:
+        return   JSONResponse(status_code=404,content={"message" : "Película no encontrada"})           
+    result.title = movie.title
+    result.overview = movie.overview
+    result.year = movie.year
+    result.rating = movie.rating
+    result.categoria = movie.categoria
+    db.commit()
+    return JSONResponse(status_code=200, content={"message" : "Película modificada"})  
+    # for item in movies:
+    #     if item["id"] == id:
+    #         item["title"] = movie.title
+    #         item["overview"] = movie.overview
+    #         item["year"] = movie.year
+    #         item["rating"] = movie.rating
+    #         item["categoria"] = movie.categoria
+
+       
     # return JSONResponse(content=list(filter(lambda x: x['id'] == id, movies)))
 
 
 @app.delete('/movies/{id}', tags=['CRUD'],status_code=200)
 def delete_movies_by_id(id: int):
-    for item in movies:
-        if item["id"] == id:
-            movies.remove(item)
-            return JSONResponse(status_code=200,content={"message" : "Película eliminada"})  
-    return   JSONResponse(status_code=404,content={"message" : "Película no encontrada"})    
+    db = Session()
+    result = db.query(MovieModel).filter(MovieModel.id == id).first()
+    if not result:
+        return   JSONResponse(status_code=404,content={"message" : "Película no encontrada"}) 
+    db.delete(result)
+    db.commit()
+    return JSONResponse(status_code=200,content={"message" : "Película eliminada"})  
+
+    # for item in movies:
+    #     if item["id"] == id:
+    #         movies.remove(item)
+    #         return JSONResponse(status_code=200,content={"message" : "Película eliminada"})  
+    # return   JSONResponse(status_code=404,content={"message" : "Película no encontrada"})    
     # return JSONResponse(content=movies)
 
 
